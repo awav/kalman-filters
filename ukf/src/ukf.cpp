@@ -18,6 +18,29 @@ double pi_range(double phi) {
  * Initializes Unscented Kalman filter
  */
 UKF::UKF() {
+  const auto n = 2 * n_aug_ + 1;
+
+  Xsig_pred_ = MatrixXd::Zero(n_x_, n);
+  x_aug_     = VectorXd::Zero(n_aug_);
+  P_aug_     = MatrixXd::Identity(n_aug_, n_aug_);
+  Xsig_aug_  = MatrixXd::Zero(n_aug_, n);
+
+  Zsig_rad_   = MatrixXd::Zero(n_z_rad_, n);
+  z_pred_rad_ = VectorXd::Zero(n_z_rad_);
+  Rrad_       = MatrixXd(n_z_rad_, n_z_rad_);
+  Srad_       = MatrixXd(n_z_rad_, n_z_rad_);
+  Tc_rad_     = MatrixXd(n_x_, n_z_rad_);
+
+  Zsig_las_   = MatrixXd::Zero(n_z_las_, n);
+  z_pred_las_ = VectorXd::Zero(n_z_las_);
+  Rlas_       = MatrixXd(n_z_las_, n_z_las_);
+  Slas_       = MatrixXd(n_z_las_, n_z_las_);
+  Tc_las_     = MatrixXd(n_x_, n_z_las_);
+
+  weights_ = VectorXd(n);
+  x_       = VectorXd::Zero(n_x_);
+  P_       = MatrixXd::Identity(n_x_, n_x_);
+
   double weights_init = 0.5 / (n_aug_ + lambda_);
   weights_.fill(weights_init);
   weights_(0) = lambda_ / (lambda_ + n_aug_);
@@ -82,6 +105,13 @@ void UKF::ProcessMeasurement(const MeasurementPackage &mp) {
 }
 
 /**
+ * Getter of state
+ */
+const VectorXd& UKF::State() const {
+  return x_;
+}
+
+/**
  * Predicts sigma points, the state, and the state covariance matrix.
  * @param {double} dt_ the change in time (in seconds) between the last
  * measurement and this one.
@@ -120,10 +150,10 @@ void UKF::UpdateRadar(const MeasurementPackage &mp) {
 void UKF::AugmentSigmaPoints() {
   x_aug_ << x_.array(), 0, 0;
   P_aug_.topLeftCorner(n_x_, n_x_) = P_;
-  P_aug_(n_x_ + 1, n_x_ + 1) = std_a_ * std_a_;
-  P_aug_(n_x_ + 2, n_x_ + 2) = std_yawdd_ * std_yawdd_;
+  P_aug_(n_x_, n_x_) = std_a_ * std_a_;
+  P_aug_(n_x_+1, n_x_+1) = std_yawdd_ * std_yawdd_;
 
-  MatrixXd L =  P_aug_.llt().matrixL();
+  const MatrixXd &L =  P_aug_.llt().matrixL();
 
   Xsig_aug_.col(0) = x_aug_;
   double coeff = std::sqrt(lambda_ + n_aug_);
@@ -190,11 +220,10 @@ void UKF::PredictMeanAndCovariance() {
     x_ += weights_(i) * Xsig_pred_.col(i);
   }
 
-  // TODO: change to `const MatrixXd &`
-  MatrixXd diffs = Xsig_aug_.colwise() - x_;
+  MatrixXd x_diffs = Xsig_pred_.colwise() - x_;
   for (int i = 0; i < n; ++i) {
-    diffs(3, i) = pi_range(diffs(3, i));
-    P_ += weights_(i) * diffs.col(i) * diffs.col(i).transpose();
+    x_diffs(3, i) = pi_range(x_diffs(3, i));
+    P_ += weights_(i) * x_diffs.col(i) * x_diffs.col(i).transpose();
   }
 }
 
@@ -228,13 +257,12 @@ void UKF::PredictRadarMeasurement() {
     z_pred_rad_ += weights_(i) * Zsig_rad_.col(i);
   }
 
-  // TODO: change to `const MatrixXd &`
   MatrixXd z_diffs = Zsig_rad_.colwise() - z_pred_rad_;
-  MatrixXd x_diffs = Xsig_aug_.colwise() - x_;
+  MatrixXd x_diffs = Xsig_pred_.colwise() - x_;
 
   Srad_ += Rrad_;
   for (int i = 0; i < n; i++) {
-    z_diffs(3, i) = pi_range(z_diffs(3, i));
+    z_diffs(1, i) = pi_range(z_diffs(1, i));
     Srad_ += weights_(i) * z_diffs.col(i) * z_diffs.col(i).transpose();
 
     x_diffs(3, i) = pi_range(x_diffs(3, i));
@@ -260,9 +288,8 @@ void UKF::PredictLaserMeasurement() {
     z_pred_las_ += weights_(i) * Zsig_las_.col(i);
   }
 
-  // TODO: change to `const MatrixXd &`
-  MatrixXd z_diffs = Zsig_las_.colwise() - z_pred_las_;
-  MatrixXd x_diffs = Xsig_aug_.colwise() - x_;
+  const MatrixXd &z_diffs = Zsig_las_.colwise() - z_pred_las_;
+  const MatrixXd &x_diffs = Xsig_pred_.colwise() - x_;
 
   Slas_ += Rlas_;
   for (int i = 0; i < n; i++) {
@@ -273,8 +300,7 @@ void UKF::PredictLaserMeasurement() {
 
 
 double UKF::Update(const VectorXd &dz, const MatrixXd &Tc, const MatrixXd &S) {
-  // TODO: Change into `const MatrixXd&`
-  MatrixXd Sinv = S.inverse();
+  const MatrixXd &Sinv = S.inverse();
   MatrixXd K = Tc * Sinv;
 
   x_ = x_ + (K * dz);

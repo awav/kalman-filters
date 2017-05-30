@@ -38,6 +38,15 @@ FusionEKF::FusionEKF() {
 */
 FusionEKF::~FusionEKF() {}
 
+/**
+ * Convert angle to [-PI, PI] range
+ */
+double pi_range(double phi) {
+  phi = std::remainder(phi + M_PI, 2 * M_PI);
+  phi = phi >= 0 ? (phi - M_PI) : (phi + M_PI);
+  return phi;
+}
+
 
 /**
  * Getter of EKF state vector
@@ -133,9 +142,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       double vy = x[3];
 
       double rho = std::sqrt(px*px + py*py);
-      double alpha = std::atan2(py, px);
-      alpha = std::remainder(alpha + M_PI, 2 * M_PI);
-      alpha = alpha >= 0 ? (alpha - M_PI) : (alpha + M_PI);
+      double alpha = pi_range(std::atan2(py, px));
 
       h << rho, alpha, (px*vx + py*vy) / std::max(rho, epsilon_);
 

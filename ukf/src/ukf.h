@@ -29,6 +29,11 @@ public:
    */
   void ProcessMeasurement(const MeasurementPackage &meas_package);
 
+  /**
+   * Getter of state vector
+   */
+  const Eigen::VectorXd& State() const;
+
 private:
 
   /**
@@ -127,52 +132,50 @@ private:
   const double std_radrd_ = 0.3;
 
 
-
   ///* predicted sigma points matrix
-  Eigen::MatrixXd Xsig_pred_ = Eigen::MatrixXd::Zero(n_x_, 2 * n_aug_ + 1);
+  Eigen::MatrixXd Xsig_pred_;
 
   ///* augmented state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in
   ///* SI units and rad
-  Eigen::VectorXd x_aug_ = Eigen::VectorXd::Zero(n_aug_);
+  Eigen::VectorXd x_aug_;
 
   ///* augmented state covariance matrix
-  Eigen::MatrixXd P_aug_ = Eigen::MatrixXd::Identity(n_aug_, n_aug_);
+  Eigen::MatrixXd P_aug_;
 
   ///* augmented sigma points matrix
-  Eigen::MatrixXd Xsig_aug_ = Eigen::MatrixXd::Zero(n_aug_, 2 * n_aug_ + 1);
-
-
-
-  ///*
-  Eigen::VectorXd Zsig_rad_ = Eigen::MatrixXd::Zero(n_z_rad_, 2 * n_aug_ + 1);
-
-  ///*
-  Eigen::VectorXd z_pred_rad_ = Eigen::VectorXd::Zero(n_z_rad_);
-
-  ///*
-  Eigen::MatrixXd Rrad_ = Eigen::MatrixXd(n_z_rad_, n_z_rad_);
-
-  ///*
-  Eigen::MatrixXd Srad_ = Eigen::MatrixXd(n_z_rad_, n_z_rad_);
-
-  ///*
-  Eigen::MatrixXd Tc_rad_ = Eigen::MatrixXd(n_x_, n_z_rad_);
+  Eigen::MatrixXd Xsig_aug_;
 
 
   ///*
-  Eigen::VectorXd Zsig_las_ = Eigen::MatrixXd::Zero(n_z_las_, 2 * n_aug_ + 1);
+  Eigen::MatrixXd Zsig_rad_;
 
   ///*
-  Eigen::VectorXd z_pred_las_ = Eigen::VectorXd::Zero(n_z_las_);
+  Eigen::VectorXd z_pred_rad_;
 
   ///*
-  Eigen::MatrixXd Rlas_ = Eigen::MatrixXd(n_z_las_, n_z_las_);
+  Eigen::MatrixXd Rrad_;
 
   ///*
-  Eigen::MatrixXd Slas_ = Eigen::MatrixXd(n_z_las_, n_z_las_);
+  Eigen::MatrixXd Srad_;
 
   ///*
-  Eigen::MatrixXd Tc_las_ = Eigen::MatrixXd(n_x_, n_z_las_);
+  Eigen::MatrixXd Tc_rad_;
+
+
+  ///*
+  Eigen::MatrixXd Zsig_las_;
+
+  ///*
+  Eigen::VectorXd z_pred_las_;
+
+  ///*
+  Eigen::MatrixXd Rlas_;
+
+  ///*
+  Eigen::MatrixXd Slas_;
+
+  ///*
+  Eigen::MatrixXd Tc_las_;
 
 
   ///* time when the state is true, in us
@@ -189,13 +192,13 @@ public:
   double NIS_laser_;
 
   ///* Weights of sigma points
-  Eigen::VectorXd weights_ = Eigen::VectorXd(2 * n_aug_ + 1);
+  Eigen::VectorXd weights_;
 
   ///* state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
-  Eigen::VectorXd x_ = Eigen::VectorXd::Zero(n_x_);
+  Eigen::VectorXd x_;
 
   ///* state covariance matrix
-  Eigen::MatrixXd P_ = Eigen::MatrixXd::Identity(n_x_, n_x_);
+  Eigen::MatrixXd P_;
 
 };
 
