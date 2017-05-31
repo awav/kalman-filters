@@ -70,8 +70,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     double py = 0;
     MatrixXd P = MatrixXd::Identity(4, 4);
     VectorXd x = VectorXd(4).setZero();
-    P(2, 2) = 100;
-    P(3, 3) = 100;
+    P(2, 2) = 10;
+    P(3, 3) = 10;
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       double rho = measurement_pack.raw_measurements_[0];
@@ -102,8 +102,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
   double dt_3 = dt_2 * dt;
   double dt_4 = dt_3 * dt;
 
-  constexpr double ax = 5;
-  constexpr double ay = 5;
+  const double ax = 5;
+  const double ay = 5;
 
   F_(0, 2) = dt;
   F_(1, 3) = dt;
@@ -135,17 +135,18 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     const auto &z = measurement_pack.raw_measurements_;
 
     const auto &measurement_func = [this](const auto &x) {
-      VectorXd h = VectorXd(3);
       double px = x[0];
       double py = x[1];
       double vx = x[2];
       double vy = x[3];
 
       double rho = std::sqrt(px*px + py*py);
+      rho = std::abs(rho) < epsilon_ ? epsilon_ : rho;
       double alpha = pi_range(std::atan2(py, px));
+      double rho_dot = (px*vx + py*vy) / rho;
 
-      h << rho, alpha, (px*vx + py*vy) / std::max(rho, epsilon_);
-
+      VectorXd h = VectorXd(3);
+      h << rho, alpha, rho_dot;
       return h;
     };
 
@@ -160,6 +161,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
       double p2_sum = px_2 + py_2;
       double rho = std::sqrt(p2_sum);
+      rho = std::abs(rho) < epsilon_ ? epsilon_ : rho;
       double p3_sum = p2_sum * rho;
 
       Hj_(0, 0) = px/rho;
