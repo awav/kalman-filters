@@ -36,6 +36,11 @@ public:
   const Eigen::VectorXd& StateVector() const;
 
   /**
+   * Covaiance Getter
+   */
+  const Eigen::MatrixXd& CovarianceVector() const;
+
+  /**
    * Prediction Predicts the state and the state covariance
    * using the process model
    * @param delta_T Time between k and k+1 in s
@@ -50,7 +55,6 @@ public:
    */
   void Update(const HFunc &h,
               const HPrimeFunc &h_prime,
-              const Eigen::VectorXd &z,
               const Eigen::MatrixXd &R);
 
   /**

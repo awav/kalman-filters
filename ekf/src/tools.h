@@ -22,4 +22,8 @@ public:
                                 const std::vector<Eigen::VectorXd> &ground_truth);
 };
 
+
+double pi_range(double phi);
+
+
 #endif /* TOOLS_H_ */

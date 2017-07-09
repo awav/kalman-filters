@@ -15,6 +15,9 @@ const VectorXd& KalmanFilter::StateVector() const {
   return x_;
 }
 
+const MatrixXd& KalmanFilter::CovarianceVector() const {
+  return P_;
+}
 
 void KalmanFilter::Predict(const KalmanFilter::FFunc &prediction,
                            const KalmanFilter::FPrimeFunc &prediction_prime,
@@ -28,10 +31,9 @@ void KalmanFilter::Predict(const KalmanFilter::FFunc &prediction,
 
 void KalmanFilter::Update(const KalmanFilter::HFunc &h_func,
                           const KalmanFilter::HPrimeFunc &h_prime_func,
-                          const VectorXd &z,
                           const MatrixXd &r) {
-  VectorXd y = z - h_func(x_);
-  MatrixXd h =  h_prime_func(x_);
+  VectorXd y = h_func(x_);
+  MatrixXd h = h_prime_func(x_);
   MatrixXd h_t =  h.transpose();
   MatrixXd s = (h * P_ * h_t) + r;
   MatrixXd s_i = s.inverse();

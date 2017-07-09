@@ -28,3 +28,10 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
   const VectorXd &mse = squared_err / length;
   return mse.array().sqrt();
 }
+
+
+double pi_range(double phi) {
+  phi = std::remainder(phi + M_PI, 2 * M_PI);
+  phi = phi >= 0 ? (phi - M_PI) : (phi + M_PI);
+  return phi;
+}
